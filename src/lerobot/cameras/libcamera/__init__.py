@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .camera import Camera
-from .configs import CameraConfig, ColorMode, Cv2Rotation
-from .utils import make_cameras_from_configs
+"""
+LibCamera camera module for lerobot.
 
-# Import camera implementations to register their configs
-from . import opencv  # noqa: F401
-from . import realsense  # noqa: F401
-from . import libcamera  # noqa: F401
+This module provides camera support for Raspberry Pi cameras using libcamera.
+"""
+
+from .camera_libcamera import LibCameraCamera
+from .configuration_libcamera import LibCameraCameraConfig
+
+__all__ = ["LibCameraCamera", "LibCameraCameraConfig"] 

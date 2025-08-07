@@ -26,20 +26,21 @@ IndexOrPath: TypeAlias = int | Path
 
 def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[str, Camera]:
     cameras = {}
-
     for key, cfg in camera_configs.items():
         if cfg.type == "opencv":
             from .opencv import OpenCVCamera
-
             cameras[key] = OpenCVCamera(cfg)
-
         elif cfg.type == "intelrealsense":
             from .realsense.camera_realsense import RealSenseCamera
-
             cameras[key] = RealSenseCamera(cfg)
+        elif cfg.type == "libcamera":
+            from .libcamera import LibCameraCamera
+            cameras[key] = LibCameraCamera(cfg)
+        elif cfg.type == "picamera2":
+            from .picamera2 import Picamera2Camera
+            cameras[key] = Picamera2Camera(cfg)
         else:
-            raise ValueError(f"The motor type '{cfg.type}' is not valid.")
-
+            raise ValueError(f"The camera type '{cfg.type}' is not valid.")
     return cameras
 
 

@@ -168,7 +168,7 @@ class ZbotLeader(Teleoperator):
                 if joint_id in joint_id_to_name:
                     joint_name = joint_id_to_name[joint_id]
                     joint_key = f"{joint_name}.pos"
-                    self.joint_positions[joint_key] = float(position)
+                self.joint_positions[joint_key] = float(position)
             
             self.last_update_time = time.time()
             
@@ -187,4 +187,4 @@ class ZbotLeader(Teleoperator):
             return
 
         self.sock.close()
-        self.connected = False 
+        self.connected = False

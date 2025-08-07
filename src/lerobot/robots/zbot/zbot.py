@@ -133,6 +133,11 @@ class ZBot(Robot):
 
         # Connect to KOS
         asyncio.run(self._connect_kos())
+        
+        # Connect cameras
+        for cam in self.cameras.values():
+            cam.connect()
+            
         self._connected = True
 
     @property
@@ -228,15 +233,15 @@ class ZBot(Robot):
         # Get joint states
         observation = asyncio.run(self._get_joint_states())
         
-        # Add camera observations if available
+        # Add camera observations if available (consistent with other robots)
         for camera_name, camera in self.cameras.items():
             if camera.is_connected:
                 try:
-                    image = camera.get_image()
-                    if image is not None:
-                        observation[camera_name] = image
-                except Exception as e:
-                    logger.warning(f"Failed to get image from camera {camera_name}: {e}")
+                    observation[camera_name] = camera.async_read(timeout_ms=500)  # 500ms timeout
+                except (TimeoutError, Exception) as e:
+                    # Don't let camera errors affect robot operation
+                    logger.debug(f"Camera {camera_name} read failed: {e}")
+                    # Continue without camera data
                     
         return observation
 
@@ -260,7 +265,7 @@ class ZBot(Robot):
                         'position': position
                     }
                     actuator_commands.append(command)
-            
+                    
             # Send commands directly (no logging, no safety limits)
             if actuator_commands:
                 self.kos_client.actuator.command_actuators(actuator_commands)
@@ -283,7 +288,7 @@ class ZBot(Robot):
         """Disconnect from the robot and perform cleanup."""
         if not self.is_connected:
             return
-            
+        
         # Disconnect cameras
         for camera in self.cameras.values():
             camera.disconnect()
@@ -299,4 +304,4 @@ class ZBot(Robot):
             finally:
                 self.kos_client = None
                 
-        self._connected = False 
+        self._connected = False

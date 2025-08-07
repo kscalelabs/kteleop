@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .config import TeleoperatorConfig
-from .teleoperator import Teleoperator
-from .utils import make_teleoperator_from_config
+from dataclasses import dataclass
 
-# Import teleoperator implementations
-from .zbot_leader import ZbotLeader, ZbotLeaderConfig
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("zbot_leader")
+@dataclass
+class ZbotLeaderConfig(TeleoperatorConfig):
+    # UDP host and port for receiving joint data
+    host: str = "0.0.0.0"
+    port: int = 8888 

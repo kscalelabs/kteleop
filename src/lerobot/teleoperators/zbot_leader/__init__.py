@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .config import TeleoperatorConfig
-from .teleoperator import Teleoperator
-from .utils import make_teleoperator_from_config
+from .config_zbot_leader import ZbotLeaderConfig
+from .zbot_leader import ZbotLeader
 
-# Import teleoperator implementations
-from .zbot_leader import ZbotLeader, ZbotLeaderConfig
+__all__ = ["ZbotLeader", "ZbotLeaderConfig"] 

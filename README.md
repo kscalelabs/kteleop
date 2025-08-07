@@ -1,102 +1,52 @@
-<p align="center">
-  <img alt="LeRobot, Hugging Face Robotics Library" src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/lerobot-logo-thumbnail.png" width="100%">
-  <br/>
-  <br/>
-</p>
 
-<div align="center">
 
-[![Tests](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/huggingface/lerobot/actions/workflows/nighty.yml?query=branch%3Amain)
-[![Python versions](https://img.shields.io/pypi/pyversions/lerobot)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/huggingface/lerobot/blob/main/LICENSE)
-[![Status](https://img.shields.io/pypi/status/lerobot)](https://pypi.org/project/lerobot/)
-[![Version](https://img.shields.io/pypi/v/lerobot)](https://pypi.org/project/lerobot/)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.1-ff69b4.svg)](https://github.com/huggingface/lerobot/blob/main/CODE_OF_CONDUCT.md)
-[![Discord](https://dcbadge.vercel.app/api/server/C5P34WJ68S?style=flat)](https://discord.gg/s3KuuzsPFb)
+## ZBot Teleoperation Setup
 
-<!-- [![Coverage](https://codecov.io/gh/huggingface/lerobot/branch/main/graph/badge.svg?token=TODO)](https://codecov.io/gh/huggingface/lerobot) -->
+### Prerequisites
 
-</div>
+Before running ZBot teleoperation, you need to set up the K-Scale robot infrastructure:
 
-<h2 align="center">
-    <p><a href="https://huggingface.co/docs/lerobot/hope_jr">
-        Build Your Own HopeJR Robot!</a></p>
-</h2>
+1. **KOS Service Setup:**
+   ```bash
+   # Clone and build the K-Scale KOS service
+   git clone https://github.com/kscalelabs/kos-kbot.git
+   cd kos-kbot
+   cargo run
+   ```
 
-<div align="center">
-  <img
-    src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/hope_jr/hopejr.png"
-    alt="HopeJR robot"
-    title="HopeJR robot"
-    width="60%"
-  />
+2. **CAN Bus Configuration:**
+   ```bash
+   # Set up CAN bus for robot communication
+   ./set_can.sh
+   ```
 
-  <p><strong>Meet HopeJR – A humanoid robot arm and hand for dexterous manipulation!</strong></p>
-  <p>Control it with exoskeletons and gloves for precise hand movements.</p>
-  <p>Perfect for advanced manipulation tasks! 🤖</p>
+3. **Environment Setup:**
+   ```bash
+   # Activate the lerobot environment
+   conda activate lerobot
+   ```
 
-  <p><a href="https://huggingface.co/docs/lerobot/hope_jr">
-      See the full HopeJR tutorial here.</a></p>
-</div>
+### Running ZBot Teleoperation
 
-<br/>
+To start the ZBot teleoperation system:
 
-<h2 align="center">
-    <p><a href="https://huggingface.co/docs/lerobot/so101">
-        Build Your Own SO-101 Robot!</a></p>
-</h2>
+```bash
+conda activate lerobot && python -m lerobot.teleoperate --teleop.type zbot_leader --robot.type zbot --teleop.host 0.0.0.0 --teleop.port 8888
+```
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/so101/so101.webp" alt="SO-101 follower arm" title="SO-101 follower arm" width="90%"/></td>
-      <td align="center"><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/so101/so101-leader.webp" alt="SO-101 leader arm" title="SO-101 leader arm" width="90%"/></td>
-    </tr>
-  </table>
+This will:
+- Start the UDP-based teleoperator listening on port 8888
+- Connect to the ZBot robot via KOS
+- Enable real-time teleoperation with 120 FPS for low latency
 
-  <p><strong>Meet the updated SO100, the SO-101 – Just €114 per arm!</strong></p>
-  <p>Train it in minutes with a few simple moves on your laptop.</p>
-  <p>Then sit back and watch your creation act autonomously! 🤯</p>
+### Dependencies
 
-  <p><a href="https://huggingface.co/docs/lerobot/so101">
-      See the full SO-101 tutorial here.</a></p>
-
-  <p>Want to take it to the next level? Make your SO-101 mobile by building LeKiwi!</p>
-  <p>Check out the <a href="https://huggingface.co/docs/lerobot/lekiwi">LeKiwi tutorial</a> and bring your robot to life on wheels.</p>
-
-  <img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/lekiwi/kiwi.webp" alt="LeKiwi mobile robot" title="LeKiwi mobile robot" width="50%">
-</div>
-
-<br/>
-
-<h3 align="center">
-    <p>LeRobot: State-of-the-art AI for real-world robotics</p>
-</h3>
+- **KOS Service**: [kos-kbot repository](https://github.com/kscalelabs/kos-kbot)
+- **CAN Bus Setup**: `./set_can.sh` script for robot communication
+- **Python Environment**: `conda activate lerobot`
+- **UDP Communication**: External puppeteer sending joint data to port 8888
 
 ---
-
-🤗 LeRobot aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry to robotics so that everyone can contribute and benefit from sharing datasets and pretrained models.
-
-🤗 LeRobot contains state-of-the-art approaches that have been shown to transfer to the real-world with a focus on imitation learning and reinforcement learning.
-
-🤗 LeRobot already provides a set of pretrained models, datasets with human collected demonstrations, and simulation environments to get started without assembling a robot. In the coming weeks, the plan is to add more and more support for real-world robotics on the most affordable and capable robots out there.
-
-🤗 LeRobot hosts pretrained models and datasets on this Hugging Face community page: [huggingface.co/lerobot](https://huggingface.co/lerobot)
-
-#### Examples of pretrained models on simulation environments
-
-<table>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/aloha_act.gif" width="100%" alt="ACT policy on ALOHA env"/></td>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/simxarm_tdmpc.gif" width="100%" alt="TDMPC policy on SimXArm env"/></td>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/pusht_diffusion.gif" width="100%" alt="Diffusion policy on PushT env"/></td>
-  </tr>
-  <tr>
-    <td align="center">ACT policy on ALOHA env</td>
-    <td align="center">TDMPC policy on SimXArm env</td>
-    <td align="center">Diffusion policy on PushT env</td>
-  </tr>
-</table>
 
 ## Installation
 

@@ -411,7 +411,7 @@ def get_video_info(video_path: Path | str) -> dict:
 
         video_info["video.height"] = video_stream.height
         video_info["video.width"] = video_stream.width
-        video_info["video.codec"] = video_stream.codec.canonical_name
+        video_info["video.codec"] = video_stream.codec.name  # Use .name instead of .canonical_name
         video_info["video.pix_fmt"] = video_stream.pix_fmt
         video_info["video.is_depth_map"] = False
 

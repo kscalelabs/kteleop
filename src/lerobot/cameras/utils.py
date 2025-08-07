@@ -39,6 +39,9 @@ def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[s
         elif cfg.type == "picamera2":
             from .picamera2 import Picamera2Camera
             cameras[key] = Picamera2Camera(cfg)
+        elif cfg.type == "dummy":
+            from .dummy import DummyCamera
+            cameras[key] = DummyCamera(cfg)
         else:
             raise ValueError(f"The camera type '{cfg.type}' is not valid.")
     return cameras

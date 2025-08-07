@@ -17,6 +17,10 @@ from .configs import CameraConfig, ColorMode, Cv2Rotation
 from .utils import make_cameras_from_configs
 
 # Import camera implementations to register their configs
-from . import opencv  # noqa: F401
-from . import realsense  # noqa: F401
-from . import libcamera  # noqa: F401
+from . import dummy
+from . import libcamera
+from . import opencv
+from . import picamera2
+from . import realsense
+
+__all__ = ["dummy", "libcamera", "opencv", "picamera2", "realsense"]

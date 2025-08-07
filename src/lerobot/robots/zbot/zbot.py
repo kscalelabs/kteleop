@@ -190,16 +190,17 @@ class ZBot(Robot):
             
         logger.info("ZBot configuration completed")
 
-    async def _get_joint_states(self) -> dict[str, Any]:
-        """Get current joint states from KOS."""
+    def get_observation(self) -> dict[str, Any]:
+        """Retrieve the current observation from the robot."""
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected")
             
+        # Get joint states - use sync approach to avoid event loop issues
         try:
+            observation = {}
             # Get actuator states from KOS (sync call)
             state_list = self.kos_client.actuator.get_actuators_state(self.all_joint_ids)
             
-            observation = {}
             for actuator_state in state_list:
                 joint_id = actuator_state.actuator_id
                 joint_name = self.joint_id_to_name[joint_id]
@@ -213,7 +214,6 @@ class ZBot(Robot):
                 self._current_velocities[joint_id] = actuator_state.velocity
                 
             self._last_update_time = time.time()
-            return observation
             
         except Exception as e:
             logger.error(f"Failed to get joint states: {e}")
@@ -223,35 +223,27 @@ class ZBot(Robot):
                 joint_name = self.joint_id_to_name[joint_id]
                 observation[f"{joint_name}.pos"] = self._current_positions.get(joint_id, 0.0)
                 observation[f"{joint_name}.vel"] = self._current_velocities.get(joint_id, 0.0)
-            return observation
-
-    def get_observation(self) -> dict[str, Any]:
-        """Retrieve the current observation from the robot."""
-        if not self.is_connected:
-            raise DeviceNotConnectedError(f"{self} is not connected")
-            
-        # Get joint states
-        observation = asyncio.run(self._get_joint_states())
         
         # Add camera observations if available (consistent with other robots)
         for camera_name, camera in self.cameras.items():
             if camera.is_connected:
                 try:
-                    observation[camera_name] = camera.async_read(timeout_ms=500)  # 500ms timeout
+                    # Use normal timeout for reliable camera reading
+                    observation[camera_name] = camera.async_read(timeout_ms=200)  # 200ms timeout - normal
                 except (TimeoutError, Exception) as e:
-                    # Don't let camera errors affect robot operation
-                    logger.debug(f"Camera {camera_name} read failed: {e}")
-                    # Continue without camera data
-                    
+                    # Don't let camera errors affect robot operation - just skip camera data
+                    # This is normal when camera is slower than robot loop
+                    pass
+        
         return observation
 
-    def _send_joint_commands(self, action: dict[str, float]) -> dict[str, float]:
-        """Send joint commands to KOS - simplified like test_pykos_fixed.py."""
+    def send_action(self, action: dict[str, float]) -> dict[str, float]:
+        """Send action to the robot."""
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected")
             
         try:
-            # Create actuator commands directly (like test_pykos_fixed.py)
+            # Create actuator commands directly
             actuator_commands = []
             
             for joint_id in self.all_joint_ids:
@@ -266,23 +258,15 @@ class ZBot(Robot):
                     }
                     actuator_commands.append(command)
                     
-            # Send commands directly (no logging, no safety limits)
+            # Send commands directly (sync call)
             if actuator_commands:
                 self.kos_client.actuator.command_actuators(actuator_commands)
                 
             return action
             
         except Exception as e:
+            logger.error(f"Failed to send action: {e}")
             return {}
-
-    def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
-        """Send an action command to the robot - simplified."""
-        if not self.is_connected:
-            raise DeviceNotConnectedError(f"{self} is not connected")
-                
-        # Send commands directly (no logging)
-        result = self._send_joint_commands(action)
-        return result
 
     def disconnect(self) -> None:
         """Disconnect from the robot and perform cleanup."""

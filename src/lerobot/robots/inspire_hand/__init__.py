@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .config import TeleoperatorConfig
-from .teleoperator import Teleoperator
-from .utils import make_teleoperator_from_config
+from .inspire_hand import InspireHand
+from .config_inspire_hand import InspireHandConfig
 
-# Import teleoperator implementations
-from .zbot_leader import ZbotLeader, ZbotLeaderConfig
-from .oymotion_glove import OyMotionGlove, OyMotionGloveConfig
-from .zbot_inspire_leader import ZBotInspireLeader, ZBotInspireLeaderConfig
-from .zbot_inspire_combined import ZBotInspireCombined, ZBotInspireCombinedConfig
+__all__ = ["InspireHand", "InspireHandConfig"] 

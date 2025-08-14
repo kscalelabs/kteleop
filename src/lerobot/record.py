@@ -165,6 +165,8 @@ class RecordConfig:
     policy: PreTrainedConfig | None = None
     # Display all cameras on screen
     display_data: bool = False
+    # Use web viewer instead of native GUI (useful for headless/remote systems)
+    web_viewer: bool = False
     # Use vocal synthesis to read events.
     play_sounds: bool = True
     # Resume recording on an existing dataset.
@@ -289,7 +291,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     init_logging()
     logging.info(pformat(asdict(cfg)))
     if cfg.display_data:
-        _init_rerun(session_name="recording")
+        _init_rerun(session_name="recording", web_mode=cfg.web_viewer)
 
     robot = make_robot_from_config(cfg.robot)
     teleop = make_teleoperator_from_config(cfg.teleop) if cfg.teleop is not None else None

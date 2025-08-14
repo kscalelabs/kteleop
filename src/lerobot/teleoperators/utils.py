@@ -65,9 +65,22 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .bi_so100_leader import BiSO100Leader
 
         return BiSO100Leader(config)
+    elif config.type == "oymotion_glove":
+        from .oymotion_glove import OyMotionGlove
+ 
+        return OyMotionGlove(config)
+    elif config.type == "zbot_inspire_leader":
+        from .zbot_inspire_leader import ZBotInspireLeader
+ 
+        return ZBotInspireLeader(config)
     elif config.type == "zbot_leader":
         from .zbot_leader import ZbotLeader
 
         return ZbotLeader(config)
+    elif config.type == "zbot_inspire_combined":
+        from .zbot_inspire_combined import ZBotInspireCombined
+
+        return ZBotInspireCombined(config)
+        
     else:
         raise ValueError(config.type)

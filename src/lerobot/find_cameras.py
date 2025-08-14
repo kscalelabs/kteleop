@@ -44,6 +44,8 @@ from lerobot.cameras.realsense.camera_realsense import RealSenseCamera
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig
 from lerobot.cameras.libcamera.camera_libcamera import LibCameraCamera
 from lerobot.cameras.libcamera.configuration_libcamera import LibCameraCameraConfig
+from lerobot.cameras.picamera2.camera_picamera2 import Picamera2Camera
+from lerobot.cameras.picamera2.configuration_picamera2 import Picamera2CameraConfig
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +112,26 @@ def find_all_libcamera_cameras() -> list[dict[str, Any]]:
     return all_libcamera_cameras_info
 
 
+def find_all_picamera2_cameras() -> list[dict[str, Any]]:
+    """
+    Finds all available picamera2 cameras plugged into the system.
+
+    Returns:
+        A list of all available picamera2 cameras with their metadata.
+    """
+    all_picamera2_cameras_info: list[dict[str, Any]] = []
+    logger.info("Searching for picamera2 cameras...")
+    try:
+        picamera2_cameras = Picamera2Camera.find_cameras()
+        for cam_info in picamera2_cameras:
+            all_picamera2_cameras_info.append(cam_info)
+        logger.info(f"Found {len(picamera2_cameras)} picamera2 cameras.")
+    except Exception as e:
+        logger.error(f"Error finding picamera2 cameras: {e}")
+
+    return all_picamera2_cameras_info
+
+
 def find_and_print_cameras(camera_type_filter: str | None = None) -> list[dict[str, Any]]:
     """
     Finds available cameras based on an optional filter and prints their information.
@@ -132,12 +154,14 @@ def find_and_print_cameras(camera_type_filter: str | None = None) -> list[dict[s
         all_cameras_info.extend(find_all_realsense_cameras())
     if camera_type_filter is None or camera_type_filter == "libcamera":
         all_cameras_info.extend(find_all_libcamera_cameras())
+    if camera_type_filter is None or camera_type_filter == "picamera2":
+        all_cameras_info.extend(find_all_picamera2_cameras())
 
     if not all_cameras_info:
         if camera_type_filter:
             logger.warning(f"No {camera_type_filter} cameras were detected.")
         else:
-            logger.warning("No cameras (OpenCV, RealSense, or libcamera) were detected.")
+            logger.warning("No cameras (OpenCV, RealSense, libcamera, or picamera2) were detected.")
     else:
         print("\n--- Detected Cameras ---")
         for i, cam_info in enumerate(all_cameras_info):
@@ -206,6 +230,14 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
                 fps=30,
             )
             instance = LibCameraCamera(libcamera_config)
+        elif cam_type == "picamera2":
+            picamera2_config = Picamera2CameraConfig(
+                camera_index=int(cam_id) if isinstance(cam_id, str) and cam_id.isdigit() else 0,
+                width=1920,
+                height=1080,
+                fps=30,
+            )
+            instance = Picamera2Camera(picamera2_config)
         else:
             logger.warning(f"Unknown camera type: {cam_type} for ID {cam_id}. Skipping.")
             return None
@@ -328,8 +360,8 @@ def main():
         type=str,
         nargs="?",
         default=None,
-        choices=["realsense", "opencv", "libcamera"],
-        help="Specify camera type to capture from (e.g., 'realsense', 'opencv', 'libcamera'). Captures from all if omitted.",
+        choices=["realsense", "opencv", "libcamera", "picamera2"],
+        help="Specify camera type to capture from (e.g., 'realsense', 'opencv', 'libcamera', 'picamera2'). Captures from all if omitted.",
     )
     parser.add_argument(
         "--output-dir",

@@ -29,6 +29,21 @@ python -m lerobot.teleoperate \
     --display_data=true
 ```
 
+Example with web viewer (for headless/remote systems):
+
+```shell
+python -m lerobot.teleoperate \
+    --robot.type=so101_follower \
+    --robot.port=/dev/tty.usbmodem58760431541 \
+    --robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 10}}" \
+    --robot.id=black \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/tty.usbmodem58760431551 \
+    --teleop.id=blue \
+    --display_data=true \
+    --web_viewer=true
+```
+
 Example teleoperation with bimanual so100:
 
 ```shell
@@ -46,7 +61,8 @@ python -m lerobot.teleoperate \
   --teleop.left_arm_port=/dev/tty.usbmodem5A460828611 \
   --teleop.right_arm_port=/dev/tty.usbmodem5A460826981 \
   --teleop.id=bimanual_leader \
-  --display_data=true
+  --display_data=true \
+  --web_viewer=true
 ```
 
 """
@@ -97,6 +113,8 @@ class TeleoperateConfig:
     teleop_time_s: float | None = None
     # Display all cameras on screen
     display_data: bool = False
+    # Use web viewer instead of native GUI (useful for headless/remote systems)
+    web_viewer: bool = False
 
 
 def teleop_loop(
@@ -134,7 +152,7 @@ def teleoperate(cfg: TeleoperateConfig):
     init_logging()
     logging.info(pformat(asdict(cfg)))
     if cfg.display_data:
-        _init_rerun(session_name="teleoperation")
+        _init_rerun(session_name="teleoperation", web_mode=cfg.web_viewer)
 
     teleop = make_teleoperator_from_config(cfg.teleop)
     robot = make_robot_from_config(cfg.robot)

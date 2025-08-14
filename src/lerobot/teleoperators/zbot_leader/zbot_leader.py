@@ -140,9 +140,25 @@ class ZbotLeader(Teleoperator):
     def get_action(self) -> dict[str, float]:
         # Simple UDP receive like test_pykos_fixed.py
         try:
-            # Receive UDP data (blocking)
-            data, addr = self.sock.recvfrom(512)
-            message = data.decode('utf-8')
+            # Clear buffer to get most recent data
+            self.sock.setblocking(False)
+            latest_data = None
+            latest_addr = None
+            
+            # Read all available packets, keep only the latest
+            while True:
+                try:
+                    data, addr = self.sock.recvfrom(512)
+                    latest_data = data
+                    latest_addr = addr
+                except socket.error:
+                    break  # No more packets
+            
+            if latest_data is None:
+                # No new data, return last known positions
+                return self.joint_positions.copy()
+                
+            message = latest_data.decode('utf-8')
             joint_data = json.loads(message)
             
             # Extract joint positions
@@ -168,15 +184,16 @@ class ZbotLeader(Teleoperator):
                 if joint_id in joint_id_to_name:
                     joint_name = joint_id_to_name[joint_id]
                     joint_key = f"{joint_name}.pos"
-                self.joint_positions[joint_key] = float(position)
+                    self.joint_positions[joint_key] = float(position)
             
-            self.last_update_time = time.time()
+            return self.joint_positions.copy()
             
-        except Exception as e:
-            # Use last known positions on error
-            pass
-        
-        return self.joint_positions.copy()
+        except socket.error as e:
+            # No data available, return last known positions
+            return self.joint_positions.copy()
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error parsing UDP data: {e}")
+            return self.joint_positions.copy()
 
     def send_feedback(self, feedback: dict[str, float]) -> None:
         # TODO: Implement force feedback if needed

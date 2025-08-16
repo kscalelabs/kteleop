@@ -69,6 +69,10 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .zbot import ZBot
 
         return ZBot(config)
+    elif config.type == "zbot_inspire":
+        from .zbot_inspire import ZBotInspire
+
+        return ZBotInspire(config)
     else:
         raise ValueError(config.type)
 

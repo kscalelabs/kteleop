@@ -112,20 +112,49 @@ class ZBotInspire(Robot):
 
     def get_observation(self) -> dict[str, Any]:
         obs = {}
-        z = self.zbot.get_observation()
-        obs.update({f"zbot_{k}": v for k, v in z.items()})
         
-        # Get Inspire hand observation  
-        hand_start = time.perf_counter()
-        h = self.hand.get_observation()
-        obs.update({f"hand_{k}": v for k, v in h.items()})
-        hand_time = (time.perf_counter() - hand_start) * 1000
+        # Get ZBot observation with timeout protection
+        try:
+            zbot_start = time.perf_counter()
+            z = self.zbot.get_observation()
+            # Only keep position observations, filter out velocity
+            obs.update({f"zbot_{k}": v for k, v in z.items() if k.endswith('.pos')})
+            zbot_time = (time.perf_counter() - zbot_start) * 1000
+            if zbot_time > 100:  # Warn if ZBot takes >100ms
+                logger.warning(f"ZBot observation took {zbot_time:.1f}ms")
+        except Exception as e:
+            logger.error(f"ZBot observation failed: {e}")
+            # Return dummy ZBot data to keep going (position only)
+            for joint_name in ["left_shoulder_pitch", "left_shoulder_roll", "left_shoulder_yaw", "left_elbow", "left_wrist",
+                             "right_shoulder_pitch", "right_shoulder_roll", "right_shoulder_yaw", "right_elbow", "right_wrist"]:
+                obs[f"zbot_{joint_name}.pos"] = 0.0
+                # Velocity removed - only position needed for pick & place tasks
+        
+        # Get Inspire hand observation with timeout protection
+        try:
+            hand_start = time.perf_counter()
+            h = self.hand.get_observation()
+            obs.update({f"hand_{k}": v for k, v in h.items()})
+            hand_time = (time.perf_counter() - hand_start) * 1000
+            if hand_time > 100:  # Warn if hand takes >100ms
+                logger.warning(f"Hand observation took {hand_time:.1f}ms")
+        except Exception as e:
+            logger.error(f"Hand observation failed: {e}")
+            # Return dummy hand data to keep going
+            for finger_name in ["thumb", "index", "middle", "ring", "pinky", "extra"]:
+                obs[f"hand_{finger_name}.pos"] = 0.0
 
+        # Get camera observations with timeout protection
         for cam_key, cam in self.cameras.items():
-            start = time.perf_counter()
-            obs[cam_key] = cam.async_read()
-            dt_ms = (time.perf_counter() - start) * 1e3
-            logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
+            try:
+                start = time.perf_counter()
+                obs[cam_key] = cam.async_read(timeout_ms=50)  # 50ms timeout for cameras
+                dt_ms = (time.perf_counter() - start) * 1e3
+                if dt_ms > 50:  # Warn if camera takes >50ms
+                    logger.warning(f"Camera {cam_key} took {dt_ms:.1f}ms")
+            except Exception as e:
+                logger.warning(f"Camera {cam_key} read failed: {e}")
+                # Skip camera data if it fails
 
         return obs
 

@@ -115,11 +115,11 @@ class InspireHand(Robot):
             self.serial_port.read()
 
     def _read_register(self, addr: int, num_bytes: int) -> List[int]:
-        """Read from Inspire hand register."""
+        """Read from Inspire hand register - optimized for speed using exact protocol."""
         if self.serial_port is None or not getattr(self.serial_port, "is_open", False):
             raise DeviceNotConnectedError("Serial port not open")
         
-        # Create read command
+        # Create read command according to protocol
         cmd = [0xEB, 0x90, self.config.hand_id, 0x04, 0x11]
         cmd.extend([addr & 0xFF, (addr >> 8) & 0xFF, num_bytes])
         
@@ -129,18 +129,24 @@ class InspireHand(Robot):
         
         # Send command
         self.serial_port.write(bytes(cmd))
-        time.sleep(0.01)  # 10ms delay
         
-        # Read response
-        response = self.serial_port.read(128)
-        if len(response) < 7:
-            raise RuntimeError("No data received")
+        # Read exact response size: header(2) + ID(1) + length(1) + flag(1) + addr(2) + data(12) + checksum(1) = 20 bytes
+        expected_size = 8 + num_bytes  # Protocol overhead + data
+        response = self.serial_port.read(expected_size)
         
-        # Parse response
-        data_len = response[3] - 3
+        if len(response) < expected_size:
+            raise RuntimeError(f"Incomplete data: got {len(response)}, expected {expected_size}")
+        
+        # Validate header: 0x90, 0xEB (note: response header is reversed!)
+        if response[0] != 0x90 or response[1] != 0xEB:
+            raise RuntimeError("Invalid response header")
+        
+        # Extract data directly (skip parsing overhead)
+        # Data starts at byte[7] and is num_bytes long
         values = []
-        for i in range(0, data_len, 2):
+        for i in range(0, num_bytes, 2):
             if 7 + i + 1 < len(response):
+                # Little-endian: low byte first, then high byte
                 val = response[7 + i] | (response[7 + i + 1] << 8)
                 values.append(val)
         
@@ -152,11 +158,12 @@ class InspireHand(Robot):
             raise DeviceAlreadyConnectedError(f"{self} already connected")
 
         try:
-            # Open serial port
+            # Open serial port - Reliable settings
             self.serial_port = serial.Serial(
                 port=self.config.serial_port,
                 baudrate=self.config.baudrate,
-                timeout=0.05  # Reduced from 0.1s to 50ms for faster reads (60ms total)
+                timeout=0.025,  # 25ms read timeout - fast but reliable
+                write_timeout=0.05  # 50ms write timeout - more reliable for commands
             )
             
             # Test communication by reading current positions

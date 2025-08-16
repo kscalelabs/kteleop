@@ -76,6 +76,12 @@ class Picamera2Camera(Camera):
         """Check if the camera is currently connected."""
         return self._connected and self._picam2 is not None
 
+    def _apply_hardcoded_crop(self, frame: np.ndarray) -> np.ndarray:
+        """Hardcoded crop: remove 420px from left and right, output 1080x1080."""
+        # Input: 1920x1080, Output: 1080x1080
+        # Remove 420px from left and right (1920 - 840 = 1080)
+        return frame[:, 200:1400]  # Crop from x=420 to x=1500
+
     def connect(self, warmup: bool = True) -> None:
         """Connect to the camera using picamera2."""
         if self._connected:
@@ -92,23 +98,22 @@ class Picamera2Camera(Camera):
             camera_info = self._picam2.camera_config
             logger.info(f"Camera config: {camera_info}")
             
-            # Configure for the specified resolution and format
-            # Use video configuration for better performance
+            # HARDCODED: Always capture at 1080p regardless of config
             config = self._picam2.create_video_configuration(
                 main={
-                    "format": 'XRGB8888',  # Standard format
-                    "size": (self.config.width, self.config.height)
+                    "format": 'RGB888',  # Use RGB888 for correct colors (was XRGB8888)
+                    "size": (1600, 1200)  # HARDCODED 1080p
                 },
                 controls={
                     "FrameDurationLimits": (33333, 33333),  # 30 FPS
                     "AeEnable": True,  # Auto exposure
-                    "AwbEnable": True,  # Auto white balance
+                    "AwbEnable": True,  # Auto white balance (revert to auto)
                     "NoiseReductionMode": 1,  # Enable noise reduction
                 }
             )
             
             self._picam2.configure(config)
-            logger.info("Camera configured")
+            logger.info("Camera HARDCODED to 1920x1080 (ignoring config resolution)")
             
             # Start the camera
             self._picam2.start()
@@ -208,13 +213,14 @@ class Picamera2Camera(Camera):
             # Capture frame as numpy array (like OpenCV)
             frame = self._picam2.capture_array()
             
-            # Convert XRGB to BGR (OpenCV format) - this is fast
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
+            # Apply hardcoded crop: 1920x1080 -> 1080x1080 (remove 420px from left/right)
+            frame = self._apply_hardcoded_crop(frame)
             
-            # Convert BGR to RGB if needed - only if necessary
+            # Frame is already in RGB888 format - convert to BGR if needed
             target_color_mode = color_mode if color_mode is not None else self.config.color_mode
-            if target_color_mode != ColorMode.BGR:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            if target_color_mode == ColorMode.BGR:
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            # If target is RGB, frame is already in correct format
             
             self._frame_count += 1
             return frame
@@ -246,13 +252,14 @@ class Picamera2Camera(Camera):
             # Capture frame as numpy array (like OpenCV)
             frame = self._picam2.capture_array()
             
-            # Convert XRGB to BGR (OpenCV format)
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
+            # Apply hardcoded crop: 1920x1080 -> 1080x1080 (remove 420px from left/right)
+            frame = self._apply_hardcoded_crop(frame)
             
-            # Convert BGR to RGB if needed
+            # Frame is already in RGB888 format - convert to BGR if needed
             target_color_mode = color_mode if color_mode is not None else self.config.color_mode
-            if target_color_mode != ColorMode.BGR:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            if target_color_mode == ColorMode.BGR:
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            # If target is RGB, frame is already in correct format
             
             # Skip metadata capture for speed - it's not essential for robot control
             # try:

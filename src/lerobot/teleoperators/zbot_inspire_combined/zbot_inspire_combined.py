@@ -148,11 +148,33 @@ class ZBotInspireCombined(Teleoperator):
     def get_action(self) -> dict[str, float]:
         """Receive combined UDP data and return both joint and finger actions."""
         try:
-            # Blocking read - wait for UDP data
-            #self.sock.setblocking(True)
-            data, addr = self.sock.recvfrom(2048)
+            # Clear buffer to get most recent data (prevent buffer overflow)
+            self.sock.setblocking(False)
+            latest_data = None
+            latest_addr = None
+            
+            # Read all available packets, keep only the latest
+            packet_count = 0
+            while True:
+                try:
+                    data, addr = self.sock.recvfrom(2048)
+                    latest_data = data
+                    latest_addr = addr
+                    packet_count += 1
+                except socket.error:
+                    break  # No more packets
+            
+            if latest_data is None:
+                # No new data, return last known positions
+                action = {}
+                action.update({f"zbot_{k}": v for k, v in self.joint_positions.items()})
+                action.update({f"hand_{k}": v for k, v in self.finger_positions.items()})
+                return action
                 
-            message = data.decode('utf-8')
+            if packet_count > 1:
+                logger.debug(f"Cleared {packet_count-1} old UDP packets, using latest")
+                
+            message = latest_data.decode('utf-8')
             combined_data = json.loads(message)
             
             # Process joint data
@@ -185,12 +207,6 @@ class ZBotInspireCombined(Teleoperator):
             logger.debug(f"Received combined data: {len(joints)} joints, {len(finger_values)} fingers")
             return action
                 
-        except socket.error as e:
-            # No data available, return last known positions
-            action = {}
-            action.update({f"zbot_{k}": v for k, v in self.joint_positions.items()})
-            action.update({f"hand_{k}": v for k, v in self.finger_positions.items()})
-            return action
         except (ValueError, KeyError) as e:
             logger.error(f"Error parsing combined UDP data: {e}")
             action = {}

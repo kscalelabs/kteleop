@@ -124,12 +124,15 @@ def teleop_loop(
     start = time.perf_counter()
     while True:
         loop_start = time.perf_counter()
+        
         action = teleop.get_action()
+        
         if display_data:
             observation = robot.get_observation()
             log_rerun_data(observation, action)
 
         robot.send_action(action)
+        
         dt_s = time.perf_counter() - loop_start
         busy_wait(1 / fps - dt_s)
 

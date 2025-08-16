@@ -227,8 +227,16 @@ def record_loop(
 
     timestamp = 0
     start_episode_t = time.perf_counter()
+    loop_count = 0
+    fps_print_interval = 10  # Print FPS every 10 loops
+    
     while timestamp < control_time_s:
         start_loop_t = time.perf_counter()
+        loop_count += 1
+        
+        # Print every loop start for debugging
+        if loop_count <= 5 or loop_count % 10 == 0:
+            print(f"Starting loop {loop_count} at {time.perf_counter() - start_episode_t:.2f}s")
 
         if events["exit_early"]:
             events["exit_early"] = False
@@ -284,6 +292,18 @@ def record_loop(
         busy_wait(1 / fps - dt_s)
 
         timestamp = time.perf_counter() - start_episode_t
+        
+        # Print FPS info every N loops
+        loop_count += 1
+        if loop_count % fps_print_interval == 0:
+            actual_fps = 1.0 / dt_s if dt_s > 0 else 0
+            print(f"Loop {loop_count}: dt={dt_s:.3f}s, actual_fps={actual_fps:.1f}, target_fps={fps}")
+            
+            # Also print action values for debugging
+            if 'action' in locals():
+                action_str = ", ".join([f"{k}={v:.3f}" if isinstance(v, (float, int)) else f"{k}={v}" 
+                                      for k, v in list(action.items())[:3]])  # First 3 actions
+                print(f"  Action: {action_str}...")
 
 
 @parser.wrap()

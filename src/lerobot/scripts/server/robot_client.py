@@ -91,8 +91,11 @@ class RobotClient:
         """
         # Store configuration
         self.config = config
+        print("🤖 Creating robot from config...")
         self.robot = make_robot_from_config(config.robot)
+        print("🔌 Connecting to robot...")
         self.robot.connect()
+        print("✅ Robot connected successfully!")
 
         lerobot_features = map_robot_keys_to_lerobot_features(self.robot)
 
@@ -325,6 +328,16 @@ class RobotClient:
                         f"Network latency (server->client): {server_to_client_latency:.2f}ms | "
                         f"Deserialization time: {deserialize_time * 1000:.2f}ms"
                     )
+                    
+                # Print first action data (always show this)
+                if len(timed_actions) > 0:
+                    first_action = timed_actions[0].get_action()
+                    # Convert tensor to list and show first 6 values
+                    if hasattr(first_action, 'tolist'):
+                        action_values = first_action.tolist()[:6]
+                    else:
+                        action_values = str(first_action)[:50]
+                    print(f"🎯 ACTION RECEIVED: {action_values}...")  # First 6 action values
 
                 # Update action queue
                 start_time = time.perf_counter()
@@ -409,6 +422,17 @@ class RobotClient:
 
             raw_observation: RawObservation = self.robot.get_observation()
             raw_observation["task"] = task
+
+            # Debug: Print observation data (commented out)
+            # print(f"=== OBSERVATION DEBUG ===")
+            # for key, value in raw_observation.items():
+            #     if isinstance(value, (int, float)):
+            #         print(f"  {key}: {value:.3f}")
+            #     elif hasattr(value, 'shape'):  # numpy array
+            #         print(f"  {key}: shape={value.shape}, dtype={value.dtype}, min={value.min():.3f}, max={value.max():.3f}")
+            #     else:
+            #         print(f"  {key}: {type(value)} - {str(value)[:50]}...")
+            # print(f"========================")
 
             with self.latest_action_lock:
                 latest_action = self.latest_action

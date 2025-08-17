@@ -71,8 +71,9 @@ class ZBotInspire(Robot):
 
     @cached_property
     def observation_features(self) -> dict[str, type | tuple]:
-        # Combine zbot motor obs, hand obs, and cameras
-        zbot_obs = {f"zbot_{k}": v for k, v in self.zbot.observation_features.items() if isinstance(v, type)}
+        # Combine zbot motor obs (POSITION ONLY), hand obs, and cameras
+        zbot_obs = {f"zbot_{k}": v for k, v in self.zbot.observation_features.items() 
+                    if isinstance(v, type) and k.endswith('.pos')}  # Only position, no velocity
         hand_obs = {f"hand_{k}": v for k, v in self.hand.observation_features.items() if isinstance(v, type)}
         return {**zbot_obs, **hand_obs, **self._cameras_ft}
 
@@ -148,13 +149,21 @@ class ZBotInspire(Robot):
         for cam_key, cam in self.cameras.items():
             try:
                 start = time.perf_counter()
-                obs[cam_key] = cam.async_read(timeout_ms=50)  # 50ms timeout for cameras
+                obs[cam_key] = cam.async_read(timeout_ms=100)  # 100ms timeout for cameras
                 dt_ms = (time.perf_counter() - start) * 1e3
-                if dt_ms > 50:  # Warn if camera takes >50ms
-                    logger.warning(f"Camera {cam_key} took {dt_ms:.1f}ms")
+                #if dt_ms > 50:  # Warn if camera takes >50ms
+                    #logger.warning(f"Camera {cam_key} took {dt_ms:.1f}ms")
             except Exception as e:
                 logger.warning(f"Camera {cam_key} read failed: {e}")
-                # Skip camera data if it fails
+                # Return dummy camera data to keep dataset happy
+                # Create a black image with the expected dimensions
+                try:
+                    height, width, _ = self._cameras_ft[cam_key]
+                    import numpy as np
+                    obs[cam_key] = np.zeros((height, width, 3), dtype=np.uint8)
+                except:
+                    # Fallback to a small black image if dimensions unknown
+                    obs[cam_key] = np.zeros((480, 640, 3), dtype=np.uint8)
 
         return obs
 

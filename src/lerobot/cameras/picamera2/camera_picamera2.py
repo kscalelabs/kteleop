@@ -78,9 +78,9 @@ class Picamera2Camera(Camera):
 
     def _apply_hardcoded_crop(self, frame: np.ndarray) -> np.ndarray:
         """Hardcoded crop: remove 420px from left and right, output 1080x1080."""
-        # Input: 1920x1080, Output: 1080x1080
+        # Input: 1200*1600, Output: 400x500
         # Remove 420px from left and right (1920 - 840 = 1080)
-        return frame[:, 200:1400]  # Crop from x=420 to x=1500
+        return frame[650:1050, 700:1200]  # Crop from x=420 to x=1500
 
     def connect(self, warmup: bool = True) -> None:
         """Connect to the camera using picamera2."""

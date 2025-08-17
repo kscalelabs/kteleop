@@ -15,7 +15,7 @@ class Picamera2CameraConfig(CameraConfig):
     height: int = 480
     fps: int = 30
     color_mode: ColorMode = ColorMode.RGB
-    
+
 
 
 

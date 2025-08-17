@@ -293,17 +293,17 @@ def record_loop(
 
         timestamp = time.perf_counter() - start_episode_t
         
-        # Print FPS info every N loops
+        # Print FPS info every N loops (disabled for cleaner output)
         loop_count += 1
-        if loop_count % fps_print_interval == 0:
-            actual_fps = 1.0 / dt_s if dt_s > 0 else 0
-            print(f"Loop {loop_count}: dt={dt_s:.3f}s, actual_fps={actual_fps:.1f}, target_fps={fps}")
-            
-            # Also print action values for debugging
-            if 'action' in locals():
-                action_str = ", ".join([f"{k}={v:.3f}" if isinstance(v, (float, int)) else f"{k}={v}" 
-                                      for k, v in list(action.items())[:3]])  # First 3 actions
-                print(f"  Action: {action_str}...")
+        # if loop_count % fps_print_interval == 0:
+        #     actual_fps = 1.0 / dt_s if dt_s > 0 else 0
+        #     print(f"Loop {loop_count}: dt={dt_s:.3f}s, actual_fps={actual_fps:.1f}, target_fps={fps}")
+        #     
+        #     # Also print action values for debugging
+        #     if 'action' in locals():
+        #         action_str = ", ".join([f"{k}={v:.3f}" if isinstance(v, (float, int)) else f"{k}={v}" 
+        #                               for k, v in list(action.items())[:3]])  # First 3 actions
+        #         print(f"  Action: {action_str}...")
 
 
 @parser.wrap()

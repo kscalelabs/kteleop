@@ -230,6 +230,13 @@ def record_loop(
     loop_count = 0
     fps_print_interval = 10  # Print FPS every 10 loops
     
+    print(f"=== STARTING RECORDING ===")
+    print(f"Target FPS: {fps}")
+    print(f"Episode duration: {control_time_s}s")
+    print(f"Policy: {'Yes' if policy is not None else 'No'}")
+    print(f"Robot: {robot.name}")
+    print(f"========================")
+    
     while timestamp < control_time_s:
         start_loop_t = time.perf_counter()
         loop_count += 1
@@ -248,6 +255,18 @@ def record_loop(
             observation_frame = build_dataset_frame(dataset.features, observation, prefix="observation")
 
         if policy is not None:
+            # Debug: Print what's being sent to policy
+            if loop_count <= 3 or loop_count % 20 == 0:  # Print first 3 loops, then every 20
+                print(f"=== LOOP {loop_count} - POLICY INPUT ===")
+                print(f"Observation keys: {list(observation.keys())}")
+                print(f"Observation frame keys: {list(observation_frame.keys())}")
+                if 'observation.images.left' in observation_frame:
+                    left_img = observation_frame['observation.images.left']
+                    print(f"Left camera shape: {left_img.shape if hasattr(left_img, 'shape') else type(left_img)}")
+                if 'observation.images.right' in observation_frame:
+                    right_img = observation_frame['observation.images.right']
+                    print(f"Right camera shape: {right_img.shape if hasattr(right_img, 'shape') else type(right_img)}")
+                print(f"========================")
             action_values = predict_action(
                 observation_frame,
                 policy,
@@ -293,18 +312,30 @@ def record_loop(
 
         timestamp = time.perf_counter() - start_episode_t
         
-        # Print FPS info every N loops (disabled for cleaner output)
-        loop_count += 1
-        # if loop_count % fps_print_interval == 0:
-        #     actual_fps = 1.0 / dt_s if dt_s > 0 else 0
-        #     print(f"Loop {loop_count}: dt={dt_s:.3f}s, actual_fps={actual_fps:.1f}, target_fps={fps}")
-        #     
-        #     # Also print action values for debugging
-        #     if 'action' in locals():
-        #         action_str = ", ".join([f"{k}={v:.3f}" if isinstance(v, (float, int)) else f"{k}={v}" 
-        #                               for k, v in list(action.items())[:3]])  # First 3 actions
-        #         print(f"  Action: {action_str}...")
-
+        # Print FPS info every N loops
+        if loop_count % fps_print_interval == 0:
+            actual_fps = 1.0 / dt_s if dt_s > 0 else 0
+            print(f"=== FPS INFO ===")
+            print(f"Loop {loop_count}: dt={dt_s:.3f}s, actual_fps={actual_fps:.1f}, target_fps={fps}")
+            print(f"Episode time: {timestamp:.2f}s / {control_time_s}s")
+            
+            # Also print action values for debugging
+            if 'action' in locals():
+                action_str = ", ".join([f"{k}={v:.3f}" if isinstance(v, (float, int)) else f"{k}={v}" 
+                                      for k, v in list(action.items())[:3]])  # First 3 actions
+                print(f"  Action: {action_str}...")
+            print(f"=================")
+    
+    # Print episode summary
+    total_time = time.perf_counter() - start_episode_t
+    avg_fps = loop_count / total_time if total_time > 0 else 0
+    print(f"=== EPISODE SUMMARY ===")
+    print(f"Total loops: {loop_count}")
+    print(f"Total time: {total_time:.2f}s")
+    print(f"Average FPS: {avg_fps:.2f}")
+    print(f"Target FPS: {fps}")
+    print(f"FPS efficiency: {(avg_fps/fps)*100:.1f}%")
+    print(f"======================")
 
 @parser.wrap()
 def record(cfg: RecordConfig) -> LeRobotDataset:

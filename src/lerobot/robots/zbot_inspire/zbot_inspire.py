@@ -92,6 +92,11 @@ class ZBotInspire(Robot):
     def connect(self, calibrate: bool = True) -> None:
         self.zbot.connect(calibrate)
         self.hand.connect(calibrate)
+        
+        # Set hand initial positions after connection
+        if calibrate:
+            self._set_hand_initial_positions()
+            
         for cam in self.cameras.values():
             cam.connect()
 
@@ -166,6 +171,38 @@ class ZBotInspire(Robot):
                     obs[cam_key] = np.zeros((480, 640, 3), dtype=np.uint8)
 
         return obs
+
+    def _set_hand_initial_positions(self) -> None:
+        """Set the Inspire hand to initial positions."""
+        if not self.hand.is_connected:
+            logger.warning("Hand not connected, skipping initial position setting")
+            return
+            
+        logger.info("Setting Inspire hand to initial positions...")
+        
+        # Initial positions for all 6 fingers (in hand units 0-1000)
+        # Based on the values you provided: 545.2890014648438, 362.95208740234375, 327.1883850097656, 492.9804992675781, 486.6811218261719, 70.99323272705078
+        initial_positions = {
+            "pinky": 545.2890014648438,      # Finger 0
+            "ring": 362.95208740234375,      # Finger 1  
+            "middle": 327.1883850097656,     # Finger 2
+            "index": 492.9804992675781,      # Finger 3
+            "thumb": 486.6811218261719,      # Finger 4
+            "extra": 70.99323272705078       # Finger 5
+        }
+        
+        try:
+            # Move all fingers to initial positions
+            for finger_name, target_pos in initial_positions.items():
+                logger.info(f"Moving {finger_name} to {target_pos:.2f}")
+                
+                # Send position command to hand
+                self.hand.send_action({f"{finger_name}.pos": target_pos / 1000.0})  # Convert to normalized 0-1
+                
+            logger.info("Inspire hand initial positions set successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to set hand initial positions: {e}")
 
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         zbot_action = {k.removeprefix("zbot_"): v for k, v in action.items() if k.startswith("zbot_")}

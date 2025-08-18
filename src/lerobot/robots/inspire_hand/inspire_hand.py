@@ -108,7 +108,7 @@ class InspireHand(Robot):
         
         # Send command
         self.serial_port.write(bytes(cmd))
-        time.sleep(0.01)  # 10ms delay
+        time.sleep(0.005)  # 10ms delay
         
         # Clear response buffer
         while self.serial_port.in_waiting:

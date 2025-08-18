@@ -139,6 +139,78 @@ class ZBot(Robot):
             cam.connect()
             
         self._connected = True
+        
+        # Set initial positions after connection
+        if calibrate:
+            self._set_initial_positions()
+
+    def _set_initial_positions(self) -> None:
+        """Set the robot to initial/home positions."""
+        if not self.is_connected:
+            return
+            
+        logger.info("Setting ZBot to initial positions...")
+        
+        # Initial positions for all joints (in radians)
+        initial_positions = {
+            # Left arm joints
+            11: 2.200000047683716,      # left_shoulder_pitch
+            12: 0.8999999761581421,     # left_shoulder_roll  
+            13: 33.900001525878906,     # left_shoulder_yaw
+            14: 2.0999999046325684,     # left_elbow
+            15: -59.20000076293945,     # left_wrist
+            
+            # Right arm joints
+            21: -38.70000076293945,     # right_shoulder_pitch
+            22: -4.900000095367432,     # right_shoulder_roll
+            23: 0.6000000238418579,     # right_shoulder_yaw
+            24: 49.599998474121094,     # right_elbow
+            25: 12.0                    # right_wrist
+        }
+        
+        try:
+            # Move all joints to initial positions
+            for joint_id, target_pos in initial_positions.items():
+                if joint_id in self.all_joint_ids:
+                    joint_name = self.joint_id_to_name[joint_id]
+                    logger.info(f"Moving {joint_name} (ID {joint_id}) to {target_pos:.4f}")
+                    
+                    # Set position command using command_actuators
+                    actuator_command = {
+                        "actuator_id": joint_id,
+                        "position": target_pos
+                    }
+                    self.kos_client.actuator.command_actuators([actuator_command])
+                    
+                    # Update internal state
+                    self._current_positions[joint_id] = target_pos
+                    
+            # Wait a moment for movements to complete
+            time.sleep(2.0)
+            
+            # Verify positions were actually reached
+            logger.info("Verifying initial positions were reached...")
+            try:
+                current_positions = asyncio.run(self._get_joint_states())
+                for joint_id, target_pos in initial_positions.items():
+                    if joint_id in self.all_joint_ids:
+                        joint_name = self.joint_id_to_name[joint_id]
+                        if f"{joint_name}.pos" in current_positions:
+                            actual_pos = current_positions[f"{joint_name}.pos"]
+                            error = abs(actual_pos - target_pos)
+                            if error > 0.1:  # 0.1 radian tolerance
+                                logger.warning(f"{joint_name}: Target={target_pos:.4f}, Actual={actual_pos:.4f}, Error={error:.4f}")
+                            else:
+                                logger.info(f"{joint_name}: Position reached successfully (Error={error:.4f})")
+                        else:
+                            logger.warning(f"Could not read position for {joint_name}")
+            except Exception as e:
+                logger.error(f"Failed to verify positions: {e}")
+                    
+            logger.info("ZBot initial positions set successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to set initial positions: {e}")
 
     @property
     def is_calibrated(self) -> bool:

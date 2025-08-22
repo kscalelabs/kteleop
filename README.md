@@ -4,6 +4,13 @@
 
 ### Prerequisites
 
+TELEOPERATOR choices:
+Puppet/leader arms + oymotion gloves setup:
+https://github.com/LeoLin6/kscale_raspberrypi_leader 
+
+VR:
+coming soon
+
 Before running ZBot teleoperation, you need to set up the K-Scale robot infrastructure:
 
 1. **KOS Service Setup:**

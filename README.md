@@ -41,10 +41,15 @@ To start the ZBot teleoperation system:
 conda activate lerobot && python -m lerobot.teleoperate --teleop.type zbot_leader --robot.type zbot --teleop.host 0.0.0.0 --teleop.port 8888
 ```
 
-This will:
-- Start the UDP-based teleoperator listening on port 8888
-- Connect to the ZBot robot via KOS
-- Enable real-time teleoperation with 120 FPS for low latency
+### example recording script
+
+```bash
+HF_USER=$(hf auth whoami | head -n 1)
+echo $HF_USER
+
+
+rm -rf /home/dpsh/.cache/huggingface/lerobot/$HF_USER/zbot_pick_cube35 && python -m lerobot.record   --robot.type=zbot_inspire   --robot.cameras='{"front": {"type": "picamera2", "camera_index": 0, "width": 640, "height": 480, "fps": 30, color_mode: 'BGR'}}'   --teleop.type=zbot_inspire_combined   --teleop.host=0.0.0.0   --teleop.port=8888   --display_data=false   --dataset.repo_id=$HF_USER/zbot_pick_cube35  --dataset.num_episodes=35  --dataset.single_task="ZBot teleoperation recording" --dataset.episode_time_s=20 --dataset.reset_time_s=0.1 --dataset.video_encoding_batch_size=35 --dataset.fps=30
+```
 
 ### Dependencies
 

@@ -8,6 +8,9 @@ TELEOPERATOR choices:
 Puppet/leader arms + oymotion gloves setup:
 https://github.com/LeoLin6/kscale_raspberrypi_leader 
 
+VLA fork:
+https://github.com/LeoLin6/Isaac-GR00T
+
 VR:
 coming soon
 

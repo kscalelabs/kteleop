@@ -5,7 +5,7 @@
 #    pip-compile --output-file=requirements-ubuntu.txt requirements.in
 #
 -e .[all]
-    # via -[all]
+    # via file:///home/dependabot/dependabot-updater/tmp/20260108-1084-kv22h7/dependabot-20260108-1084-9fzu2h
 absl-py==2.3.1
     # via
     #   dm-control
@@ -625,7 +625,7 @@ tzdata==2025.2
     # via pandas
 u-msgpack-python==2.8.0
     # via meshcat
-urllib3==2.5.0
+urllib3==2.6.3
     # via
     #   requests
     #   sentry-sdk

@@ -5,7 +5,7 @@
 #    pip-compile --output-file=requirements-ubuntu.txt requirements.in
 #
 -e .[all]
-    # via -[all]
+    # via file:///home/dependabot/dependabot-updater/tmp/20260113-1084-z0yhh4/dependabot-20260113-1084-dj33wx
 absl-py==2.3.1
     # via
     #   dm-control
@@ -147,7 +147,7 @@ farama-notifications==0.0.4
     # via gymnasium
 feetech-servo-sdk==1.0.0
     # via lerobot
-filelock==3.18.0
+filelock==3.20.3
     # via
     #   datasets
     #   diffusers

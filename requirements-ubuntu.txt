@@ -5,7 +5,7 @@
 #    pip-compile --output-file=requirements-ubuntu.txt requirements.in
 #
 -e .[all]
-    # via -[all]
+    # via file:///home/dependabot/dependabot-updater/tmp/20260211-1084-tbqfx9/dependabot-20260211-1084-c2yozb
 absl-py==2.3.1
     # via
     #   dm-control
@@ -396,7 +396,7 @@ pexpect==4.9.0
     # via ipython
 pfzy==0.3.4
     # via inquirerpy
-pillow==11.3.0
+pillow==12.1.1
     # via
     #   diffusers
     #   imageio
